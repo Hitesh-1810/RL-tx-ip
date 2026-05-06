@@ -1,0 +1,169 @@
+!pip install gymnasium torch numpy matplotlib
+
+
+import gymnasium as gym
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import random
+import numpy as np
+from collections import deque
+import matplotlib.pyplot as plt
+
+
+
+env = gym.make("CartPole-v1")
+
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.n
+
+print("State size:", state_dim)
+print("Action size:", action_dim)
+
+
+
+GAMMA = 0.99
+LR = 0.001
+BATCH_SIZE = 64
+MEMORY_SIZE = 10000
+
+EPSILON = 1.0
+EPSILON_DECAY = 0.995
+EPSILON_MIN = 0.01
+
+TARGET_UPDATE = 10
+EPISODES = 200
+
+
+
+class DQN(nn.Module):
+    def __init__(self):
+        super(DQN, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, action_dim)
+        )
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+
+
+memory = deque(maxlen=MEMORY_SIZE)
+
+def store_transition(state, action, reward, next_state, done):
+    memory.append((state, action, reward, next_state, done))
+
+
+
+
+policy_net = DQN()
+target_net = DQN()
+
+target_net.load_state_dict(policy_net.state_dict())
+target_net.eval()
+
+optimizer = optim.Adam(policy_net.parameters(), lr=LR)
+loss_fn = nn.MSELoss()
+
+
+
+
+def select_action(state, epsilon):
+    if random.random() < epsilon:
+        return env.action_space.sample()
+    else:
+        state = torch.FloatTensor(state).unsqueeze(0)
+        return torch.argmax(policy_net(state)).item()
+
+
+
+
+def train():
+    if len(memory) < BATCH_SIZE:
+        return
+
+    batch = random.sample(memory, BATCH_SIZE)
+    states, actions, rewards, next_states, dones = zip(*batch)
+
+    states = torch.FloatTensor(states)
+    actions = torch.LongTensor(actions).unsqueeze(1)
+    rewards = torch.FloatTensor(rewards)
+    next_states = torch.FloatTensor(next_states)
+    dones = torch.FloatTensor(dones)
+
+    current_q = policy_net(states).gather(1, actions).squeeze()
+    next_q = target_net(next_states).max(1)[0]
+
+    target_q = rewards + GAMMA * next_q * (1 - dones)
+
+    loss = loss_fn(current_q, target_q.detach())
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+
+
+
+
+
+rewards_list = []
+epsilon = EPSILON
+
+for episode in range(EPISODES):
+    state, _ = env.reset()
+    total_reward = 0
+
+    while True:
+        action = select_action(state, epsilon)
+        next_state, reward, done, _, _ = env.step(action)
+
+        store_transition(state, action, reward, next_state, done)
+        train()
+
+        state = next_state
+        total_reward += reward
+
+        if done:
+            break
+
+    rewards_list.append(total_reward)
+
+    epsilon = max(EPSILON_MIN, epsilon * EPSILON_DECAY)
+
+    if episode % TARGET_UPDATE == 0:
+        target_net.load_state_dict(policy_net.state_dict())
+
+    print(f"Episode {episode}, Reward: {total_reward}")
+
+
+
+
+
+
+plt.plot(rewards_list)
+plt.xlabel("Episodes")
+plt.ylabel("Rewards")
+plt.title("DQN Training Performance")
+plt.show()
+
+
+
+
+state, _ = env.reset()
+done = False
+
+while not done:
+    state_tensor = torch.FloatTensor(state).unsqueeze(0)
+    action = torch.argmax(policy_net(state_tensor)).item()
+    state, _, done, _, _ = env.step(action)
+
+env.close()
+
+
+
