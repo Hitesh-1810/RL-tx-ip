@@ -1,0 +1,74 @@
+ALGORITHM
+
+
+Start
+Define fuzzy sets A and B
+Find Union using max operation
+Find Intersection using min operation
+Find Complement using 1−A
+Find Difference using A∩B
+′
+Generate Cartesian product of fuzzy sets
+Perform Max-Min composition on fuzzy relations
+Display results
+Stop
+
+
+FLOWCHART
+
+
+                 ┌──────────────┐
+                 │    START     │
+                 └──────┬───────┘
+                        │
+                        ▼
+              ╔══════════════════╗
+              ║ Input fuzzy sets ║
+              ║      A and B     ║
+              ╚══════════════════╝
+                        │
+                        ▼
+              ┌──────────────────┐
+              │ Find Union       │
+              │ using MAX        │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Find Intersection│
+              │ using MIN        │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Find Complement  │
+              │     (1 - A)      │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Find Difference  │
+              │   A ∩ B'         │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Create Cartesian │
+              │ Product          │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ┌──────────────────┐
+              │ Perform Max-Min  │
+              │ Composition      │
+              └────────┬─────────┘
+                       │
+                       ▼
+              ╔══════════════════╗
+              ║ Display Results  ║
+              ╚══════════════════╝
+                       │
+                       ▼
+                 ┌──────────────┐
+                 │     STOP     │
+                 └──────────────┘
